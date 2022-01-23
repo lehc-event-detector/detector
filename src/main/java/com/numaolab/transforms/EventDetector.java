@@ -79,12 +79,13 @@ public class EventDetector extends PTransform<PCollection<TagData>, PCollectionL
   }
 
   protected static class DetectCROSS extends DoFn<KV<String, Iterable<TagData>>, Result> {
+    public final Jedis jedis = new Jedis("redis", 6379);
+
     public Boolean detect(Tags prev, Tags curr) {
       return Cmd.detectCross(prev, curr);
     }
     @ProcessElement
     public void process(ProcessContext ctx, IntervalWindow w) {
-      Jedis jedis = new Jedis("redis", 6379);
       try {
         Tags curr = new Tags((Collection<TagData>) ctx.element().getValue());
         // 非重要タグと重要タグがそれぞれ1枚以上必要
@@ -100,8 +101,6 @@ public class EventDetector extends PTransform<PCollection<TagData>, PCollectionL
         // キャッシュを更新
         jedis.set(curr.gid, curr.toJson());
       } catch (Exception e) {
-      } finally {
-        jedis.close();
       }
     }
   }

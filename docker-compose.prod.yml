@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  jobmanager:
+    image: flink:1.13
+    ports:
+      - "8081:8081"
+    command: jobmanager
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        jobmanager.memory.flink.size: 2048mb
+        jobmanager.memory.process.size: 3072mb
+  taskmanager:
+    image: flink:1.13
+    depends_on:
+      - jobmanager
+    command: taskmanager
+    scale: 1
+    environment:
+      - |
+        FLINK_PROPERTIES=
+        jobmanager.rpc.address: jobmanager
+        taskmanager.numberOfTaskSlots: 8
+        taskmanager.memory.flink.size: 2048mb
+        taskmanager.memory.process.size: 3072mb
+
+  redis:
+    image: "redis:latest"
+    ports:
+      - "6379:6379"
+
+  dummy:
+    build: ./helper/publisher
+    environment:
+      - HOST=192.168.88.133
+      - PORT=1883
+      - TOPIC=all
+      - HEADER=11111111
+      - ENV=11111111
+
+networks:
+  default:
+    name: lednet

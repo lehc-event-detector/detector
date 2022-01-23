@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+WORKDIR=/usr/src/lehc-event-detector
+PJROOT=$(cd $(dirname $0)/..; pwd)
+IMAGE=maven:3.8-openjdk-8-slim
+MQTT=tcp://192.168.88.133:1883
+MONGO=mongodb://root:example@192.168.88.133:27017
+HEADER=00000010
+ENV=00000010
+MASTER=192.168.88.133:8081
+ID=$1
+CMD="mvn clean package exec:java -DskipTests=true -Dexec.mainClass=com.numaolab.Main -Pflink-runner -Dexec.args=\"--runner=FlinkRunner --streaming=true --id=$ID --mqttUrl=$MQTT --mongoUrl=$MONGO --header=$HEADER --env=$ENV --checkpointingInterval=100 --flinkMaster=$MASTER --filesToStage=$WORKDIR/target/lehc-event-detector-bundled-1.0.jar\""
+
+eval "docker run -it -w $WORKDIR -v maven-repo:/root/.m2 -v $PJROOT:$WORKDIR --rm $IMAGE $CMD"

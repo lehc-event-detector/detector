@@ -17,7 +17,7 @@ public class Config {
       put("0000000000000010" + "0000", Logic.DROP);
       // put("0000000" + "0001", Logic.DROP_RSSI);
       // put("0000001" + "0001", Logic.EMERGE_RSSI);
-      put("0000000000000100" + "0000", Logic.CROSS);
+      put("0000000000000100" + "0001", Logic.CROSS);
       // put("0000010" + "0001", Logic.CROSS_RSSI);
       put("0000000000001000" + "0001", Logic.DIVIDE);
       put("0000000000010000" + "0001", Logic.MERGE);

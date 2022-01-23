@@ -62,11 +62,13 @@ public class EventDetector extends PTransform<PCollection<TagData>, PCollectionL
         }
       }
 
-      Tags prev = new Tags((Collection<TagData>) prevTags);
-      Tags curr = new Tags((Collection<TagData>) currTags);
+      Tags prev = !prevTags.isEmpty() ? new Tags((Collection<TagData>) prevTags) : null;
+      Tags curr = !currTags.isEmpty() ? new Tags((Collection<TagData>) currTags) : null;
 
       if (this.detect(prev, curr)) {
-        ctx.output(Result.create(curr.gid, curr.logic, ctx.timestamp()));
+        String gid = prev != null ? prev.gid : curr.gid;
+        Logic logic = prev != null ? prev.logic : curr.logic;
+        ctx.output(Result.create(gid, logic));
       }
     }
   }
@@ -79,28 +81,33 @@ public class EventDetector extends PTransform<PCollection<TagData>, PCollectionL
   }
 
   protected static class DetectCROSS extends DoFn<KV<String, Iterable<TagData>>, Result> {
-    public final Jedis jedis = new Jedis("redis", 6379);
+    // static final Jedis jedis = new Jedis("redis", 6379);
 
     public Boolean detect(Tags prev, Tags curr) {
       return Cmd.detectCross(prev, curr);
     }
     @ProcessElement
     public void process(ProcessContext ctx, IntervalWindow w) {
+      Jedis jedis = new Jedis("redis", 6379);
       try {
         Tags curr = new Tags((Collection<TagData>) ctx.element().getValue());
         // 非重要タグと重要タグがそれぞれ1枚以上必要
-        if (curr.niTags.size() < 1 || curr.yiTags.size() < 1) { new Exception(); }
+        if (curr.niTags.size() < 1 || curr.yiTags.size() < 1) {
+          throw new Exception("非重要タグと重要タグがそれぞれ1枚以上必要");
+        }
         // キャッシュがあれば検出実行
         String cache = jedis.get(curr.gid);
         if (cache != null) {
           Tags prev = Tags.fromJson(cache);
           if (this.detect(prev, curr)) {
-            ctx.output(Result.create(curr.gid, curr.logic, ctx.timestamp()));
+            ctx.output(Result.create(curr.gid, curr.logic));
           }
         }
         // キャッシュを更新
         jedis.set(curr.gid, curr.toJson());
       } catch (Exception e) {
+      } finally {
+        jedis.close();
       }
     }
   }
@@ -118,54 +125,6 @@ public class EventDetector extends PTransform<PCollection<TagData>, PCollectionL
       return Cmd.detectDivide(prev, curr);
     }
   }
-
-  // protected static class AsyncDetectCROSS extends JavaAsyncDoFn<KV<String, Iterable<TagData>>, Result, RedisAsyncCommands<String, String>> {
-  //   @Override
-  //   public CompletableFuture<Result> processElement(KV<String, Iterable<TagData>> input) {
-  //     RedisAsyncCommands<String, String> commands = getResource();
-  //     Tags curr = new Tags((Collection<TagData>) input.getValue());
-
-  //     final RedisFuture<String> future = commands.get(curr.gid);
-  //     return future.thenApply((new Function<String, Result>() {
-  //       @Override
-  //       public Result apply(String cache) {
-  //         Result res = Result.create(curr.gid, curr.logic, Instant.now());
-  //         // 非重要タグと重要タグがそれぞれ1枚以上必要
-  //         if (curr.niTags.size() < 1 || curr.yiTags.size() < 1) {
-
-  //         } else {
-  //           if (cache != null) {
-  //             Tags prev = Tags.fromJson(cache);
-  //             if (
-  //               (curr.logic == Logic.CROSS && Cmd.detectCross(prev, curr)) ||
-  //               (curr.logic == Logic.MERGE && Cmd.detectMerge(prev, curr)) ||
-  //               (curr.logic == Logic.DIVIDE && Cmd.detectDivide(prev, curr))
-  //             ) {
-  //               res = Result.create(curr.gid, curr.logic, Instant.now());
-  //             }
-  //           }
-  //           // キャッシュを更新
-  //           commands.set(curr.gid, curr.toJson());
-  //         }
-
-  //         return res;
-  //       }
-  //     })).toCompletableFuture();
-  //   }
-
-  //   @Override
-  //   public DoFnWithResource.ResourceType getResourceType() {
-  //       return DoFnWithResource.ResourceType.PER_CLONE;
-  //   }
-
-  //   @Override
-  //   public RedisAsyncCommands<String, String> createResource() {
-  //     RedisClient redisClient = RedisClient.create("redis://redis:6379");
-  //     StatefulRedisConnection<String, String> connection = redisClient.connect();
-  //     RedisAsyncCommands<String, String> commands = connection.async();
-  //     return commands;
-  //   }
-  // }
 
   @Override
   public PCollectionList<Result> expand(PCollection<TagData> tagDataRows) {
@@ -235,13 +194,13 @@ public class EventDetector extends PTransform<PCollection<TagData>, PCollectionL
         if (l == Logic.DROP) {
           result = groupData.apply("Detect DROP per Group", ParDo.of(new DetectDROP()));
         } else if (l == Logic.EMERGE) {
-          result = groupData.apply("Detect DROP per Group", ParDo.of(new DetectEMERGE()));
+          result = groupData.apply("Detect EMERGE per Group", ParDo.of(new DetectEMERGE()));
         } else if (l == Logic.CROSS) {
-          result = groupData.apply("Detect DROP per Group", ParDo.of(new DetectCROSS()));
+          result = groupData.apply("Detect CROSS per Group", ParDo.of(new DetectCROSS()));
         } else if (l == Logic.MERGE) {
-          result = groupData.apply("Detect DROP per Group", ParDo.of(new DetectMERGE()));
+          result = groupData.apply("Detect MERGE per Group", ParDo.of(new DetectMERGE()));
         } else {
-          result = groupData.apply("Detect DROP per Group", ParDo.of(new DetectDIVIDE()));
+          result = groupData.apply("Detect DIVIDE per Group", ParDo.of(new DetectDIVIDE()));
         }
 
         return result;

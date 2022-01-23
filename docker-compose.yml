@@ -31,14 +31,14 @@ services:
     ports:
       - "6379:6379"
 
-  dummy:
-    build: ./helper/publisher
-    environment:
-      - HOST=192.168.88.133
-      - PORT=1883
-      - TOPIC=all
-      - HEADER=11111111
-      - ENV=11111111
+  # dummy:
+  #   build: ./helper/publisher
+  #   environment:
+  #     - HOST=192.168.88.133
+  #     - PORT=1883
+  #     - TOPIC=all
+  #     - HEADER=11111111
+  #     - ENV=11111111
 
 networks:
   default:

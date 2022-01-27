@@ -28,7 +28,7 @@ public class Cmd {
     double prevDiff = Math.abs(rssiAve(prev.yiTags) - rssiAve(prev.niTags));
     double currDiff = Math.abs(rssiAve(curr.yiTags) - rssiAve(curr.niTags));
     // int threshold = Integer.parseInt(prev.other, 2);
-    int threshold = 20;
+    int threshold = 15;
     return prevDiff > threshold && currDiff <= threshold;
   }
 
@@ -39,7 +39,7 @@ public class Cmd {
     double prevDiff = Math.abs(rssiAve(prev.yiTags) - rssiAve(prev.niTags));
     double currDiff = Math.abs(rssiAve(curr.yiTags) - rssiAve(curr.niTags));
     // int threshold = Integer.parseInt(prev.other, 2);
-    int threshold = 20;
+    int threshold = 10;
     return prevDiff < threshold && currDiff >= threshold;
   }
 

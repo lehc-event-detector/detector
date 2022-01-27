@@ -81,8 +81,6 @@ public class EventDetector extends PTransform<PCollection<TagData>, PCollectionL
   }
 
   protected static class DetectCROSS extends DoFn<KV<String, Iterable<TagData>>, Result> {
-    // static final Jedis jedis = new Jedis("redis", 6379);
-
     public Boolean detect(Tags prev, Tags curr) {
       return Cmd.detectCross(prev, curr);
     }

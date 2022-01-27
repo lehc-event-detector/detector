@@ -10,7 +10,7 @@ import org.joda.time.Duration;
 public class Config {
   public static final Duration windowSize = Duration.millis(2000);
   public static final Duration windowEvery = Duration.millis(1000);
-  public static final Duration timeSkew = Duration.millis(1000);
+  public static final Duration timeSkew = Duration.millis(100);
   public static final Map<String, Logic> logicMap = new HashMap<String, Logic>() {
     {
       put("0000000000000001" + "0000", Logic.EMERGE);

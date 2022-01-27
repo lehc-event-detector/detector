@@ -7,7 +7,7 @@ MQTT=tcp://192.168.88.133:1883
 MONGO=mongodb://root:example@192.168.88.133:27017
 HEADER=00000010
 ENV=00000010
-PARALLELISM=1
+PARALLELISM=-1
 MASTER=192.168.88.133:8081
 ID=$1
 CMD="mvn clean package exec:java -DskipTests=true -Dexec.mainClass=com.numaolab.Main -Pflink-runner -Dexec.args=\"--runner=FlinkRunner --streaming=true --id=$ID --mqttUrl=$MQTT --mongoUrl=$MONGO --header=$HEADER --env=$ENV --checkpointingInterval=100 --parallelism=$PARALLELISM --flinkMaster=$MASTER --filesToStage=$WORKDIR/target/lehc-event-detector-bundled-1.0.jar\""

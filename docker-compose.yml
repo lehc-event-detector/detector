@@ -22,23 +22,13 @@ services:
       - |
         FLINK_PROPERTIES=
         jobmanager.rpc.address: jobmanager
-        taskmanager.numberOfTaskSlots: 8
+        taskmanager.numberOfTaskSlots: 4
         taskmanager.memory.flink.size: 2048mb
         taskmanager.memory.process.size: 3072mb
-
   redis:
     image: "redis:latest"
     ports:
       - "6379:6379"
-
-  # dummy:
-  #   build: ./helper/publisher
-  #   environment:
-  #     - HOST=192.168.88.133
-  #     - PORT=1883
-  #     - TOPIC=all
-  #     - HEADER=11111111
-  #     - ENV=11111111
 
 networks:
   default:
